@@ -147,4 +147,21 @@ def parse_selector(selector: str) -> Tuple[DataType, Optional[str], Optional[str
     document_id = None
     chunk_id = None
 
+    t = selector
+    if '[' in t and t.endswith(']'):
+        t = t.rstrip(']')
+        t, document_id = t.split('[', maxsplit=1)
+        if '/' in document_id:
+            document_id, chunk_id = document_id.split('/', maxsplit=1)
+            if not chunk_id: chunk_id = None
+        if not document_id: document_id = None
+
+    for i in DataType:
+        if i.value == t:
+            data_type = i
+            break
+
+    if not data_type:
+        raise BadArgumentUsage(f'Unknown data type: {t}')
+
     return data_type, document_id, chunk_id

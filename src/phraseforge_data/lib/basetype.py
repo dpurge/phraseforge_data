@@ -190,11 +190,26 @@ class Header(BaseModel):
     created: Optional[datetime] = datetime.now()
 
     def __str__(self) -> str:
-        datatype = self.type.value
         id = f'{self.document}/{self.chunk if self.chunk else '-'}'
+        selector = f'{self.type.value}[{id}]'
         langpair = f'{self.data}/{self.translation}'
         description = self.description if self.description else '-'
-        return f'{datatype}({id}, {langpair}, "{description}")'
+        return f'{selector}\t{self.created.strftime("%Y-%m-%d %H:%M:%S")}\t{description}\t{langpair}'
+    
+    def yaml(self) -> str:
+        indent = '  '
+        lines = []
+        lines.append(f'document: {self.document}')
+        lines.append(f'type: {self.type.value}')
+        lines.append(f'description: {self.description}')
+        lines.append('data:')
+        lines.append(f'{indent}language: {self.data.language.value}')
+        lines.append(f'{indent}script: {self.data.script.value}')
+        lines.append('translation:')
+        lines.append(f'{indent}language: {self.translation.language.value}')
+        lines.append(f'{indent}script: {self.translation.script.value}')
+        lines.append('')
+        return "\n".join(lines)
 
 class Document(BaseModel):
     header: Header
