@@ -28,7 +28,7 @@ def import_document(ctx, selector, input):
 
             read_document = reader[suffix]
             if not read_document: continue
-
+            
             for document in read_document(f):
                 header = document.header
 

@@ -18,7 +18,7 @@ from hashlib import md5
 from base64 import urlsafe_b64encode
 
 def get_id(*args: list[Optional[str]]) -> str:
-    text = ''.join([x if x else '' for x in args])
+    text = ''.join([x if x else '' for x in args]).casefold()
     if not text:
         return '-'
     md5bytes = md5(text.encode(encoding="utf-8")).digest()

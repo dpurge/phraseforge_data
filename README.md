@@ -13,24 +13,22 @@ List:
 
 ```sh
 uv run ff zho-hant/pol list vocabulary
-uv run ff zho-hant/pol list vocabulary[lingshailo]
-uv run ff zho-hant/pol list vocabulary[lingshailo/2]
+uv run ff zho-hant/pol list vocabulary[lingshailuo]
+uv run ff zho-hant/pol list vocabulary[lingshailuo/2]
 ```
 
 Import:
 
 ```sh
-uv run ff zho-hant/pol import ./dat/zho-hant
-
 uv run ff zho-hant/pol import vocabulary ./dat/zho-hant
-uv run ff zho-hant/pol import vocabulary[lingshailo] ./dat/zho-hant
-uv run ff zho-hant/pol import vocabulary[lingshailo/2] ./dat/zho-hant
+uv run ff zho-hant/pol import vocabulary[lingshailuo] ./dat/zho-hant
+uv run ff zho-hant/pol import vocabulary[lingshailuo/2] ./dat/zho-hant
 ```
 
 Export:
 
 ```sh
 uv run ff zho-hant/pol export vocabulary ./out
-uv run ff zho-hant/pol export vocabulary[lingshailo] ./out
-uv run ff zho-hant/pol export vocabulary[lingshailo/2] ./out
+uv run ff zho-hant/pol export vocabulary[lingshailuo] ./out
+uv run ff zho-hant/pol export vocabulary[lingshailuo/2] ./out
 ```
