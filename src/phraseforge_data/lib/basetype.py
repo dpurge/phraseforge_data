@@ -1,7 +1,18 @@
 from datetime import datetime
 from typing import Optional, Dict
 from enum import Enum
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field
+
+# from .parser import get_id
+from hashlib import md5
+from base64 import urlsafe_b64encode
+
+def get_id(*args: list[Optional[str]]) -> str:
+    text = ''.join([x if x else '' for x in args]).casefold()
+    if not text:
+        return '-'
+    md5bytes = md5(text.encode(encoding="utf-8")).digest()
+    return urlsafe_b64encode(md5bytes).decode('ascii').rstrip('=')
 
 class DataType(str, Enum):
     Vocabulary = 'vocabulary'
@@ -47,7 +58,7 @@ class Script(str, Enum):
     Tibetan = 'tibt'
 
 class Language(str, Enum):
-    Ancient_Greek = 'grc'
+    AncientGreek = 'grc'
     Akkadian = 'akk'
     Albanian = 'sqi'
     Arabic = 'ara'
@@ -98,6 +109,7 @@ class Language(str, Enum):
     Pushto = 'pus'
     Romanian = 'ron'
     Romany = 'rom'
+    Russian = 'rus'
     Serbian = 'srp'
     Spanish = 'spa'
     Swedish = 'swe'
@@ -121,6 +133,11 @@ class Language(str, Enum):
 class Grammar(BaseModel):
     text: Optional[str] = None
 
+    def __str__(self) -> str:
+        if self.text:
+            return self.text
+        return ''
+
 class Phrase(BaseModel):
     text: str
     grammar: Optional[Grammar] = None
@@ -128,12 +145,16 @@ class Phrase(BaseModel):
     created: Optional[datetime] = datetime.now()
 
     def __str__(self) -> str:
-        text = self.text
-        # if self.grammar:
-        #     text += f' {{{', '.join(self.grammar)}}}'
+        chunks = [self.text]
+        if self.grammar:
+            chunks.append('{' + self.grammar.text + '}')
         if self.transcription:
-            text += f' [{self.transcription}]'
-        return text
+            chunks.append('[' + self.transcription + ']')
+        return ' '.join(chunks)
+    
+    @computed_field
+    def id(self) -> str:
+        return get_id(self.text, str(self.grammar), self.transcription)
 
 class Model(BaseModel):
     phrase: Phrase
@@ -214,3 +235,10 @@ class Header(BaseModel):
 class Document(BaseModel):
     header: Header
     body: Vocabulary | Model | Text | Dialog
+
+    # get_id(header.type.value, header.document, header.chunk)
+    
+    @computed_field
+    def id(self) -> str:
+        header = self.header
+        return get_id(header.type.value, header.document, header.chunk)

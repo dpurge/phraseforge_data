@@ -11,6 +11,7 @@ from ..lib import (
     DataType,
     Script,
     Language,
+    Document,
     read_phraseforge_data,
     read_yaml_data,
     read_json_data,
@@ -165,3 +166,16 @@ def parse_selector(selector: str) -> Tuple[DataType, Optional[str], Optional[str
         raise BadArgumentUsage(f'Unknown data type: {t}')
 
     return data_type, document_id, chunk_id
+
+def save_document(output: str, document: Document) -> str:
+    header = document.header
+    filename = Path(output) / f'{header.document}-{header.type.value}-{header.translation}.ff'
+
+    is_new = not filename.exists()
+    with open(filename, "a", encoding='utf-8') as f:
+        if is_new: f.write(header.yaml())
+        f.write(f'\n=== {header.chunk} ===\n\n')
+        f.write(str(document.body))
+        f.write("\n")
+    
+    return filename.absolute()

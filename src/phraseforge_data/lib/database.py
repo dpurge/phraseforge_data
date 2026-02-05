@@ -12,6 +12,7 @@ from duckdb import (
 from ..dat import data_home
 
 from .basetype import (
+    get_id,
     DataType,
     Language_and_Script,
     Document,
@@ -20,11 +21,13 @@ from .basetype import (
     VocabularyItem,
     Phrase,
     Grammar,
+    Language,
+    Script,
 )
 
-from .parser import (
-    get_id,
-)
+# from .parser import (
+#     get_id,
+# )
 
 from .sql import (
     CREATE_SCHEMA,
@@ -79,9 +82,8 @@ class Database:
     def import_vocabulary(self, document):
         now = datetime.now()
         header = document.header
-        document_id = get_id(header.type.value, header.document, header.chunk)
-
-        # print(header)
+        # document_id = get_id(header.type.value, header.document, header.chunk)
+        document_id = document.id
 
         self.connection.execute(IMPORT_DOCUMENT.format(**self.sqlparams), [
             document_id,
@@ -97,12 +99,13 @@ class Database:
             translations = item.translations if item.translations else []
             notes = item.notes if item.notes else []
 
-            phrase_id = get_id(phrase.text, phrase.grammar, phrase.transcription)
+            # phrase_id = get_id(phrase.text, str(phrase.grammar), phrase.transcription)
+            phrase_id = phrase.id
 
             self.connection.execute(IMPORT_PHRASE.format(**self.sqlparams), [
                 phrase_id,
                 phrase.text,
-                phrase.grammar,
+                phrase.grammar.text if phrase.grammar else None,
                 phrase.transcription,
                 phrase.created])
             
@@ -179,3 +182,37 @@ class Database:
             doc = Document(header=header, body=body)
 
             yield doc
+
+    def find_all_vocabulary_translations(self, phrase: Phrase) -> Generator[Tuple[Language_and_Script, list[str], list[str]]]:
+        tables = [i[0] for i in self.connection.execute('SHOW TABLES').fetchall()]
+        sql = "SELECT text FROM {text_table} WHERE id IN (SELECT {id_field} FROM {to_text_table} WHERE phrase_id = ?)"
+        for language in Language:
+            for script in Script:
+                translations = []
+                notes = []
+                
+                phrase_translation_table = f'phrase_translation_{language.value}_{script.value}'
+                phrase_to_translation_table= f'phrase_to_translation_{language.value}_{script.value}'
+
+                if phrase_translation_table not in tables or phrase_to_translation_table not in tables:
+                    continue
+
+                for i in self.connection.execute(
+                    sql.format(text_table=phrase_translation_table,to_text_table=phrase_to_translation_table,id_field='translation_id'), [phrase.id]
+                ).fetchall():
+                    translations.append(i[0])
+
+                if not translations:
+                    continue
+
+                phrase_note_table = f'phrase_note_{language.value}_{script.value}'
+                phrase_to_note_table = f'phrase_to_note_{language.value}_{script.value}'
+
+                if phrase_note_table in tables and phrase_to_note_table in tables:
+                    for i in self.connection.execute(
+                        sql.format(text_table=phrase_note_table,to_text_table=phrase_to_note_table,id_field='note_id'), [phrase.id]
+                    ).fetchall():
+                        notes.append(i[0])
+
+                language_and_script = Language_and_Script(language=language, script=script)
+                yield (language_and_script, translations, notes)

@@ -8,10 +8,11 @@ import click
 from .import_document import import_document
 from .export_document import export_document
 from .list_document import list_document
+from .translate_document import translate_document
 
 from .helpers import (
     parse_context,
-    get_default_script_for_language,
+    # get_default_script_for_language,
 )
 
 from ..lib import (
@@ -43,3 +44,4 @@ def cli(ctx,
 cli.add_command(import_document)
 cli.add_command(export_document)
 cli.add_command(list_document)
+cli.add_command(translate_document)

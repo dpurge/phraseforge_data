@@ -5,6 +5,7 @@ from .basetype import (
     DataType,
     Header,
     Phrase,
+    Grammar,
     Vocabulary,
     VocabularyItem,
     Text,
@@ -14,20 +15,14 @@ from click import (
     ClickException,
 )
 
-from hashlib import md5
-from base64 import urlsafe_b64encode
-
-def get_id(*args: list[Optional[str]]) -> str:
-    text = ''.join([x if x else '' for x in args]).casefold()
-    if not text:
-        return '-'
-    md5bytes = md5(text.encode(encoding="utf-8")).digest()
-    return urlsafe_b64encode(md5bytes).decode('ascii').rstrip('=')
-
 def parse_header(text: str) -> Header:
     data = yaml.safe_load(text)
     header = Header(**data)
     return header
+
+def parse_grammar(text: str) -> Grammar:
+    data = Grammar(text = text)
+    return data
 
 def parse_vocabulary(text: str) -> Vocabulary:
     items = []
@@ -52,7 +47,7 @@ def parse_vocabulary(text: str) -> Vocabulary:
         if _phrase.endswith('}'):
             k = _phrase.find('{')
             if k > -1:
-                # _grammar = _phrase[k+1:-1].strip()
+                _grammar = parse_grammar(_phrase[k+1:-1].strip())
                 _phrase = _phrase[0:k].strip()
 
         if _translations.endswith(')'):
@@ -61,7 +56,7 @@ def parse_vocabulary(text: str) -> Vocabulary:
             _translations = _translations[0:l].strip()
 
         phrase = Phrase(
-            id = get_id(_phrase, _grammar, _transcription),
+            id = get_id(_phrase, str(_grammar), _transcription),
             text = _phrase,
             grammar = _grammar,
             transcription = _transcription)
